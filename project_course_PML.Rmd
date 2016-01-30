@@ -1,0 +1,100 @@
+---
+title: "How well people exercise. A measure from personal activity devices."
+author: "Francisco Zegarra"
+date: "Saturday, January 30, 2016"
+output: html_document
+---
+
+### Background.
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity to improve health, to find patterns in behavior, or because the persons that are using the devices are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. 
+
+In this project, our goal is to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants and predict the manner in which they did the exercise. For that we´re going to use the "classe" variable in the training set. The data for this project come from the source <http://groupware.les.inf.puc-rio.br/har>.
+
+```{r echo=FALSE} 
+library(caret)
+library(randomForest)
+```
+
+### Reading the data.
+
+```{r } 
+## Create repository directory
+setwd("D:/DataScience/Practical_Machine_Learning/data")
+## Reading the data
+training_source<- read.csv("pml-training.csv", na.strings=c("", "NA", "#DIV/0!"))
+testing_source<- read.csv("pml-testing.csv", na.strings=c("", "NA", "#DIV/0!"))
+```
+
+
+### Data processing 
+
+The exploratory visual analysis of the data extracted from the original source shows many missing values for data analysis that could affect the prediction. The strategy is keep the columns/variables with relevant information only.
+
+For that purpose we need to identify and remove the columns with the missing data:
+    
+```{r } 
+## i. Cleaning data
+training_tidy<- training_source[, colSums(is.na(training_source)) == 0] 
+testing_tidy<-testing_source[, colSums(is.na(testing_source)) == 0] 
+```
+######*(note when applying "colSums(is.na(training)) == 0" we´re keeping the columns with no missing data. Thats mean the sum of the FALSE missing values.*
+
+Next step is to ridoff unnecesary variables with no value for the "classe" prediction for both training and testing tidy data.
+
+```{r } 
+## ii. Cleaning data
+training<-training_tidy[, -c(1:7)] #columns with descriptive data only 
+testing<- testing_tidy[, -c(1:7, 60)] #columns with descriptive data only
+```
+
+### Data slicing
+
+Split the data in two data sets: 
+    
+* i. a training set; and 
+
+* ii. a testing set. 
+
+The whole model building process is developed on the training set, while the test set is  used for validation and evaluation. In this case we split the data in 75%/25%. 
+
+```{r } 
+inTrain<-createDataPartition(y=training$classe, p=0.75, list=FALSE)
+trainset<-training[inTrain,] 
+testset<-training[-inTrain,] 
+```
+
+### Modeling the data
+
+In order to developing a predictive model we will use Random Forest algorithm for his accuracy. To train the model we will resampling with cross-validation (5 times).   
+
+```{r} 
+set.seed(2613) #setting the sed 
+ctrl<-trainControl(method="cv", number=5, allowParallel=TRUE, verbose=T)
+modelfit<-train(classe~.,data=trainset, method="rf", trControl=ctrl, verbose=F)
+```
+
+Evaluating the model in the test set. 
+
+```{r} 
+predict<-predict(modelfit, newdata=testset)
+confmatrix<-confusionMatrix(table(predict, testset$classe))
+print(confmatrix)
+```
+
+The accuracy is `r confmatrix$overall[[1]]*100`% 
+
+### Making the prediction
+
+Finally, we make the prediction on the testing set, given the set of activity measurements.
+
+```{r} 
+results<-predict(modelfit, newdata=testing)
+print(results)
+```
+
+
+
+
+
+
