@@ -87,7 +87,7 @@ The accuracy is `r confmatrix$overall[[1]]*100`%
 ```{r} 
 # Out of sample error
 rf_error <- 1-(as.matrix(confmatrix$overall[[1]])) 
-rf_error
+print(rf_error)
 ```
 
 ### Making the prediction
