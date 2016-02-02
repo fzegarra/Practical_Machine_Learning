@@ -84,6 +84,12 @@ print(confmatrix)
 
 The accuracy is `r confmatrix$overall[[1]]*100`% 
 
+```{r} 
+# Out of sample error
+rf_error <- 1-(as.matrix(confmatrix$overall[[1]])) 
+rf_error
+```
+
 ### Making the prediction
 
 Finally, we make the prediction on the testing set, given the set of activity measurements.
